@@ -1,5 +1,7 @@
 # ds18b20 library
 <br />
+I convert TM Library to Hal . www.stm32f4-discovery.net
+<br />
 I hope use it and enjoy.
 <br />
 I use Stm32f103vc and Keil Compiler and Stm32CubeMX wizard.
