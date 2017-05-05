@@ -9,7 +9,7 @@ Please Do This ...
 <br />
 1) Enable FreeRTOS  
 <br />
-2) Config a timer on CubeMX . 1us per tick				example 72 MHz cpu >>> Prescaler=(72-1)      counter period=65000  
+2) Config a Gpio and a timer on CubeMX . 1us per tick				example 72 MHz cpu >>> Prescaler=(72-1)      counter period=65000  
 <br />
 3) Select "General peripheral Initalizion as a pair of '.c/.h' file per peripheral" on project settings.
 <br />
