@@ -34,18 +34,27 @@ bool	Ds18b20_ManualConvert(void)
 //###########################################################################################
 void Task_Ds18b20(void const * argument)
 {
-	osDelay(2000);
-	OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
-	osDelay(2000);
-	TempSensorCount = 0;	
-	OneWireDevices = OneWire_First(&OneWire);
-	while (OneWireDevices)
+	uint8_t	Ds18b20TryToFind=5;
+	do
 	{
-		osDelay(10);
-		TempSensorCount++;
-		OneWire_GetFullROM(&OneWire, ds18b20[TempSensorCount-1].Address);
-    OneWireDevices = OneWire_Next(&OneWire);
-  }
+		osDelay(2000);
+		OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
+		osDelay(2000);
+		TempSensorCount = 0;	
+		OneWireDevices = OneWire_First(&OneWire);
+		while (OneWireDevices)
+		{
+			osDelay(10);
+			TempSensorCount++;
+			OneWire_GetFullROM(&OneWire, ds18b20[TempSensorCount-1].Address);
+			OneWireDevices = OneWire_Next(&OneWire);
+		}
+		if(TempSensorCount>0)
+			break;
+		Ds18b20TryToFind--;
+	}while(Ds18b20TryToFind>0);
+	if(Ds18b20TryToFind==0)
+		vTaskDelete(Ds18b20Handle);
 	for (uint8_t i = 0; i < TempSensorCount; i++)
 	{
 		osDelay(10);

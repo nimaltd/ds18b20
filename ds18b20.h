@@ -1,11 +1,13 @@
 
 #ifndef	_DS18B20_H
 #define	_DS18B20_H
+//	2017/05/06
 
 #include "cmsis_os.h"
 #include "onewire.h"
 #include "ds18b20Config.h"
 #include <stdbool.h>
+
 //###################################################################################
 typedef struct
 {
