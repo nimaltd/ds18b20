@@ -27,12 +27,10 @@ void ONEWIRE_DELAY(uint16_t time_us)
 }
 void ONEWIRE_LOW(OneWire_t *gp)
 {
-	//HAL_GPIO_WritePin(gp->GPIOx,gp->GPIO_Pin,GPIO_PIN_RESET);
-	gp->GPIOx->BRR = gp->GPIO_Pin;
+	gp->GPIOx->BSRR = gp->GPIO_Pin<<16;
 }	
 void ONEWIRE_HIGH(OneWire_t *gp)
 {
-	//HAL_GPIO_WritePin(gp->GPIOx,gp->GPIO_Pin,GPIO_PIN_SET);
 	gp->GPIOx->BSRR = gp->GPIO_Pin;
 }	
 void ONEWIRE_INPUT(OneWire_t *gp)
