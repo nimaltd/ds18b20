@@ -37,14 +37,12 @@ void Task_Ds18b20(void const * argument)
 	uint8_t	Ds18b20TryToFind=5;
 	do
 	{
-		osDelay(2000);
 		OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
-		osDelay(2000);
 		TempSensorCount = 0;	
 		OneWireDevices = OneWire_First(&OneWire);
 		while (OneWireDevices)
 		{
-			osDelay(10);
+			osDelay(100);
 			TempSensorCount++;
 			OneWire_GetFullROM(&OneWire, ds18b20[TempSensorCount-1].Address);
 			OneWireDevices = OneWire_Next(&OneWire);
