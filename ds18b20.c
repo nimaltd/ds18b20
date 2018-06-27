@@ -39,6 +39,8 @@ void Task_Ds18b20(void const * argument)
 	{
 		OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
 		TempSensorCount = 0;	
+		while(HAL_GetTick() < 3000)
+			osDelay(100);
 		OneWireDevices = OneWire_First(&OneWire);
 		while (OneWireDevices)
 		{
@@ -55,9 +57,9 @@ void Task_Ds18b20(void const * argument)
 		vTaskDelete(Ds18b20Handle);
 	for (uint8_t i = 0; i < TempSensorCount; i++)
 	{
-		osDelay(10);
+		osDelay(50);
     DS18B20_SetResolution(&OneWire, ds18b20[i].Address, DS18B20_Resolution_12bits);
-		osDelay(10);
+		osDelay(50);
     DS18B20_DisableAlarmTemperature(&OneWire,  ds18b20[i].Address);
   }
 	for(;;)
@@ -70,7 +72,7 @@ void Task_Ds18b20(void const * argument)
 		}
 		Ds18b20Timeout=_DS18B20_CONVERT_TIMEOUT_MS/10;
 		DS18B20_StartAll(&OneWire);
-		osDelay(10);
+		osDelay(100);
     while (!DS18B20_AllDone(&OneWire))
 		{
 			osDelay(10);  
@@ -82,7 +84,7 @@ void Task_Ds18b20(void const * argument)
 		{
 			for (uint8_t i = 0; i < TempSensorCount; i++)
 			{
-				osDelay(10);
+				osDelay(1000);
 				ds18b20[i].DataIsValid = DS18B20_Read(&OneWire, ds18b20[i].Address, &ds18b20[i].Temperature);
 			}
 		}
