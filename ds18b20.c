@@ -11,27 +11,95 @@ uint8_t	  OneWireDevices;
 uint8_t 	TempSensorCount=0; 
 uint8_t		Ds18b20StartConvert=0;
 uint16_t	Ds18b20Timeout=0;
+#if (_DS18B20_USE_FREERTOS==1)
 osThreadId 	Ds18b20Handle;
 void Task_Ds18b20(void const * argument);
+#endif
 
 //###########################################################################################
+#if (_DS18B20_USE_FREERTOS==1)
 void	Ds18b20_Init(osPriority Priority)
 {
 	osThreadDef(myTask_Ds18b20, Task_Ds18b20, Priority, 0, 128);
   Ds18b20Handle = osThreadCreate(osThread(myTask_Ds18b20), NULL);	
 }
+#else
+bool	Ds18b20_Init(void)
+{
+	uint8_t	Ds18b20TryToFind=5;
+	do
+	{
+		OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
+		TempSensorCount = 0;	
+		while(HAL_GetTick() < 3000)
+			Ds18b20Delay(100);
+		OneWireDevices = OneWire_First(&OneWire);
+		while (OneWireDevices)
+		{
+			Ds18b20Delay(100);
+			TempSensorCount++;
+			OneWire_GetFullROM(&OneWire, ds18b20[TempSensorCount-1].Address);
+			OneWireDevices = OneWire_Next(&OneWire);
+		}
+		if(TempSensorCount>0)
+			break;
+		Ds18b20TryToFind--;
+	}while(Ds18b20TryToFind>0);
+	if(Ds18b20TryToFind==0)
+		return false;
+	for (uint8_t i = 0; i < TempSensorCount; i++)
+	{
+		Ds18b20Delay(50);
+    DS18B20_SetResolution(&OneWire, ds18b20[i].Address, DS18B20_Resolution_12bits);
+		Ds18b20Delay(50);
+    DS18B20_DisableAlarmTemperature(&OneWire,  ds18b20[i].Address);
+  }
+	return true;
+}
+#endif
 //###########################################################################################
 bool	Ds18b20_ManualConvert(void)
 {
+	#if (_DS18B20_USE_FREERTOS==1)
 	Ds18b20StartConvert=1;
 	while(Ds18b20StartConvert==1)
-		osDelay(10);
+		Ds18b20Delay(10);
 	if(Ds18b20Timeout==0)
 		return false;
 	else
 		return true;	
+	#else	
+	Ds18b20Timeout=_DS18B20_CONVERT_TIMEOUT_MS/10;
+	DS18B20_StartAll(&OneWire);
+	Ds18b20Delay(100);
+	while (!DS18B20_AllDone(&OneWire))
+	{
+		Ds18b20Delay(10);  
+		Ds18b20Timeout-=1;
+		if(Ds18b20Timeout==0)
+			break;
+	}	
+	if(Ds18b20Timeout>0)
+	{
+		for (uint8_t i = 0; i < TempSensorCount; i++)
+		{
+			Ds18b20Delay(100);
+			ds18b20[i].DataIsValid = DS18B20_Read(&OneWire, ds18b20[i].Address, &ds18b20[i].Temperature);
+		}
+	}
+	else
+	{
+		for (uint8_t i = 0; i < TempSensorCount; i++)
+			ds18b20[i].DataIsValid = false;
+	}
+	if(Ds18b20Timeout==0)
+		return false;
+	else
+		return true;
+	#endif
 }
 //###########################################################################################
+#if (_DS18B20_USE_FREERTOS==1)
 void Task_Ds18b20(void const * argument)
 {
 	uint8_t	Ds18b20TryToFind=5;
@@ -40,11 +108,11 @@ void Task_Ds18b20(void const * argument)
 		OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
 		TempSensorCount = 0;	
 		while(HAL_GetTick() < 3000)
-			osDelay(100);
+			Ds18b20Delay(100);
 		OneWireDevices = OneWire_First(&OneWire);
 		while (OneWireDevices)
 		{
-			osDelay(100);
+			Ds18b20Delay(100);
 			TempSensorCount++;
 			OneWire_GetFullROM(&OneWire, ds18b20[TempSensorCount-1].Address);
 			OneWireDevices = OneWire_Next(&OneWire);
@@ -57,9 +125,9 @@ void Task_Ds18b20(void const * argument)
 		vTaskDelete(Ds18b20Handle);
 	for (uint8_t i = 0; i < TempSensorCount; i++)
 	{
-		osDelay(50);
+		Ds18b20Delay(50);
     DS18B20_SetResolution(&OneWire, ds18b20[i].Address, DS18B20_Resolution_12bits);
-		osDelay(50);
+		Ds18b20Delay(50);
     DS18B20_DisableAlarmTemperature(&OneWire,  ds18b20[i].Address);
   }
 	for(;;)
@@ -68,7 +136,7 @@ void Task_Ds18b20(void const * argument)
 		{
 			if(Ds18b20StartConvert==1)
 				break;
-			osDelay(10);	
+			Ds18b20Delay(10);	
 		}
 		Ds18b20Timeout=_DS18B20_CONVERT_TIMEOUT_MS/10;
 		DS18B20_StartAll(&OneWire);
@@ -84,7 +152,7 @@ void Task_Ds18b20(void const * argument)
 		{
 			for (uint8_t i = 0; i < TempSensorCount; i++)
 			{
-				osDelay(1000);
+				Ds18b20Delay(1000);
 				ds18b20[i].DataIsValid = DS18B20_Read(&OneWire, ds18b20[i].Address, &ds18b20[i].Temperature);
 			}
 		}
@@ -97,6 +165,7 @@ void Task_Ds18b20(void const * argument)
     osDelay(_DS18B20_UPDATE_INTERVAL_MS);
 	}
 }
+#endif
 //###########################################################################################
 uint8_t DS18B20_Start(OneWire_t* OneWire, uint8_t *ROM)
 {

@@ -1,12 +1,19 @@
 
 #ifndef	_DS18B20_H
 #define	_DS18B20_H
-//	2017/05/06
+//	2018/09/08
 
-#include "cmsis_os.h"
+
 #include "onewire.h"
 #include "ds18b20Config.h"
 #include <stdbool.h>
+
+#if (_DS18B20_USE_FREERTOS==1)
+#include "cmsis_os.h"
+#define	Ds18b20Delay(x)			osDelay(x)
+#else
+#define	Ds18b20Delay(x)			HAL_Delay(x)
+#endif
 
 //###################################################################################
 typedef struct
@@ -53,7 +60,11 @@ typedef enum {
 } DS18B20_Resolution_t;
 
 //###################################################################################
+#if (_DS18B20_USE_FREERTOS==1)
 void			Ds18b20_Init(osPriority Priority);
+#else
+bool			Ds18b20_Init(void);
+#endif
 bool			Ds18b20_ManualConvert(void);
 //###################################################################################
 uint8_t 	DS18B20_Start(OneWire_t* OneWireStruct, uint8_t* ROM);

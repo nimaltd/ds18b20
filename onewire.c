@@ -38,8 +38,8 @@ void ONEWIRE_INPUT(OneWire_t *gp)
 	GPIO_InitTypeDef	gpinit;
 	gpinit.Mode = GPIO_MODE_INPUT;
 	gpinit.Pull = GPIO_NOPULL;
-	gpinit.Speed = GPIO_SPEED_FREQ_MEDIUM;
-	gpinit.Pin = gp->GPIO_Pin;
+	gpinit.Speed = GPIO_SPEED_FREQ_HIGH;
+	gpinit.Pin = gp->GPIO_Pin;	
 	HAL_GPIO_Init(gp->GPIOx,&gpinit);
 }	
 void ONEWIRE_OUTPUT(OneWire_t *gp)
@@ -47,7 +47,7 @@ void ONEWIRE_OUTPUT(OneWire_t *gp)
 	GPIO_InitTypeDef	gpinit;
 	gpinit.Mode = GPIO_MODE_OUTPUT_OD;
 	gpinit.Pull = GPIO_NOPULL;
-	gpinit.Speed = GPIO_SPEED_FREQ_MEDIUM;
+	gpinit.Speed = GPIO_SPEED_FREQ_HIGH;
 	gpinit.Pin = gp->GPIO_Pin;
 	HAL_GPIO_Init(gp->GPIOx,&gpinit);
 
@@ -60,14 +60,15 @@ void OneWire_Init(OneWire_t* OneWireStruct, GPIO_TypeDef* GPIOx, uint16_t GPIO_P
 	OneWireStruct->GPIO_Pin = GPIO_Pin;
 	ONEWIRE_OUTPUT(OneWireStruct);
 	ONEWIRE_HIGH(OneWireStruct);
-	osDelay(1000);
+	OneWireDelay(1000);
 	ONEWIRE_LOW(OneWireStruct);
-	osDelay(1000);
+	OneWireDelay(1000);
 	ONEWIRE_HIGH(OneWireStruct);
-	osDelay(2000);
+	OneWireDelay(2000);
 }
 
-uint8_t OneWire_Reset(OneWire_t* OneWireStruct) {
+inline uint8_t OneWire_Reset(OneWire_t* OneWireStruct)
+{
 	uint8_t i;
 	
 	/* Line low, and wait 480us */
@@ -87,7 +88,8 @@ uint8_t OneWire_Reset(OneWire_t* OneWireStruct) {
 	return i;
 }
 
-void OneWire_WriteBit(OneWire_t* OneWireStruct, uint8_t bit) {
+inline void OneWire_WriteBit(OneWire_t* OneWireStruct, uint8_t bit)
+{
 	if (bit) 
 	{
 		/* Set line low */
@@ -119,7 +121,7 @@ void OneWire_WriteBit(OneWire_t* OneWireStruct, uint8_t bit) {
 
 }
 
-uint8_t OneWire_ReadBit(OneWire_t* OneWireStruct) 
+inline uint8_t OneWire_ReadBit(OneWire_t* OneWireStruct) 
 {
 	uint8_t bit = 0;
 	
