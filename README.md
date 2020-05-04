@@ -1,4 +1,9 @@
 # ds18b20 library
+
+* http://www.github.com/NimaLTD   
+* https://www.instagram.com/github.nimaltd/   
+* https://www.youtube.com/channel/UCUhY7qY1klJm1d2kulr9ckw   
+
 <br />
 I convert TM Library to Hal . www.stm32f4-discovery.net
 <br />
