@@ -4,21 +4,16 @@
 //	2018/09/08
 
 
-#include "onewire.h"
-#include "ds18b20Config.h"
+#include "OneWire.h"
 #include <stdbool.h>
 
-#if (_DS18B20_USE_FREERTOS==1)
-#include "cmsis_os.h"
-#define	Ds18b20Delay(x)			osDelay(x)
-#else
-#define	Ds18b20Delay(x)			HAL_Delay(x)
-#endif
+#define _DS18B20_MAX_SENSORS                   1
+#define _DS18B20_CONVERT_TIMEOUT_MS         5000
 
 //###################################################################################
 typedef struct
 {
-	uint8_t 	Address[8];
+	uint8_t 	Address[ROM_SIZE];
 	float 		Temperature;
 	bool			DataIsValid;	
 	
@@ -26,6 +21,7 @@ typedef struct
 //###################################################################################
 
 extern Ds18b20Sensor_t	ds18b20[_DS18B20_MAX_SENSORS];
+extern uint8_t Ds18b20TempSensorCount;
 
 //###################################################################################
 /* Every onewire chip has different ROM code, but all the same chips has same family code */
@@ -51,20 +47,23 @@ extern Ds18b20Sensor_t	ds18b20[_DS18B20_MAX_SENSORS];
 #define DS18B20_DATA_LEN							2
 #endif
 
+/* OneWire commands for DS18B20 */
+#define DS18B20_CMD_RSCRATCHPAD    0xBE
+#define DS18B20_CMD_WSCRATCHPAD    0x4E
+#define DS18B20_CMD_CPYSCRATCHPAD  0x48
+#define DS18B20_CMD_RECEEPROM      0xB8
+#define DS18B20_CMD_RPWRSUPPLY     0xB4
+
 //###################################################################################
 typedef enum {
-	DS18B20_Resolution_9bits = 9,   /*!< DS18B20 9 bits resolution */
+	DS18B20_Resolution_9bits = 9,   /*!< DS18B20  9 bits resolution */
 	DS18B20_Resolution_10bits = 10, /*!< DS18B20 10 bits resolution */
 	DS18B20_Resolution_11bits = 11, /*!< DS18B20 11 bits resolution */
 	DS18B20_Resolution_12bits = 12  /*!< DS18B20 12 bits resolution */
 } DS18B20_Resolution_t;
 
 //###################################################################################
-#if (_DS18B20_USE_FREERTOS==1)
-void			Ds18b20_Init(osPriority Priority);
-#else
-bool			Ds18b20_Init(void);
-#endif
+void			Ds18b20_Init(OneWire_t *OneWire);
 bool			Ds18b20_ManualConvert(void);
 //###################################################################################
 uint8_t 	DS18B20_Start(OneWire_t* OneWireStruct, uint8_t* ROM);
