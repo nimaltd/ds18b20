@@ -1,5 +1,7 @@
+#ifndef _ONEWIRE_H_
+#define _ONEWIRE_H_
 
-#include "generalParameters.h"
+#include "GeneralParameters.h"
 
 #include <stdbool.h>
 
