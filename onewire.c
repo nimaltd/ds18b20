@@ -16,14 +16,23 @@
  * | along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * |----------------------------------------------------------------------
  */
-#include "onewire.h"
 #include "ds18b20Config.h"
+#include "onewire.h"
+#if (_DS18B20_NO_NOT_USE_TIMER)
+#else
 #include "tim.h"
+#endif
 
 void ONEWIRE_DELAY(uint16_t time_us)
 {
-	_DS18B20_TIMER.Instance->CNT = 0;
-	while(_DS18B20_TIMER.Instance->CNT <= time_us);
+#if (_DS18B20_NO_NOT_USE_TIMER==1)	/// use NOPs for delay
+  for (int i1 = 0; i1 < time_us*1000; i1 += _DS18B20_CYCS_PER_NS) {__ASM volatile ("nop");}
+#else	/// use 1 us timer for delay
+	__HAL_TIM_SET_COUNTER(&_DS18B20_TIMER,0);  // set the counter value a 0
+	while (__HAL_TIM_GET_COUNTER(&_DS18B20_TIMER) <= time_us);  // wait for the counter to reach the us input in the parameter
+	//_DS18B20_TIMER.Instance->CNT = 0;
+	//while(_DS18B20_TIMER.Instance->CNT <= time_us);
+#endif
 }
 void ONEWIRE_LOW(OneWire_t *gp)
 {
@@ -52,19 +61,33 @@ void ONEWIRE_OUTPUT(OneWire_t *gp)
 	HAL_GPIO_Init(gp->GPIOx,&gpinit);
 
 }
+void ONEWIRE_OUTPUT_PP(OneWire_t *gp)
+{
+	GPIO_InitTypeDef	gpinit;
+	gpinit.Mode = GPIO_MODE_OUTPUT_PP;
+	gpinit.Pull = GPIO_NOPULL;
+	gpinit.Speed = GPIO_SPEED_FREQ_HIGH;
+	gpinit.Pin = gp->GPIO_Pin;
+	HAL_GPIO_Init(gp->GPIOx,&gpinit);
+
+}
+
 void OneWire_Init(OneWire_t* OneWireStruct, GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) 
 {	
+#if (_DS18B20_NO_NOT_USE_TIMER)
+#else
 	HAL_TIM_Base_Start(&_DS18B20_TIMER);
+#endif
 
 	OneWireStruct->GPIOx = GPIOx;
 	OneWireStruct->GPIO_Pin = GPIO_Pin;
-	ONEWIRE_OUTPUT(OneWireStruct);
+	/*ONEWIRE_OUTPUT(OneWireStruct);
 	ONEWIRE_HIGH(OneWireStruct);
-	OneWireDelay(1000);
+	OneWireDelay(500);
 	ONEWIRE_LOW(OneWireStruct);
-	OneWireDelay(1000);
+	OneWireDelay(500);
 	ONEWIRE_HIGH(OneWireStruct);
-	OneWireDelay(2000);
+	OneWireDelay(500);*/
 }
 
 inline uint8_t OneWire_Reset(OneWire_t* OneWireStruct)
@@ -77,11 +100,16 @@ inline uint8_t OneWire_Reset(OneWire_t* OneWireStruct)
 	ONEWIRE_DELAY(480);
 	ONEWIRE_DELAY(20);
 	/* Release line and wait for 70us */
-	ONEWIRE_INPUT(OneWireStruct);
+#if (_DS18B20_USE_FREERTOS == 1)
+	taskENTER_CRITICAL();
+#endif
+	ONEWIRE_HIGH(OneWireStruct);
 	ONEWIRE_DELAY(70);
 	/* Check bit value */
 	i = HAL_GPIO_ReadPin(OneWireStruct->GPIOx, OneWireStruct->GPIO_Pin);
-	
+#if (_DS18B20_USE_FREERTOS == 1)
+	taskEXIT_CRITICAL();
+#endif
 	/* Delay for 410 us */
 	ONEWIRE_DELAY(410);
 	/* Return value of presence pulse, 0 = OK, 1 = ERROR */
@@ -93,30 +121,38 @@ inline void OneWire_WriteBit(OneWire_t* OneWireStruct, uint8_t bit)
 	if (bit) 
 	{
 		/* Set line low */
+#if (_DS18B20_USE_FREERTOS == 1)
+		taskENTER_CRITICAL();
+#endif
 		ONEWIRE_LOW(OneWireStruct);
-		ONEWIRE_OUTPUT(OneWireStruct);
 		ONEWIRE_DELAY(10);
 		
 		/* Bit high */
-		ONEWIRE_INPUT(OneWireStruct);
+		ONEWIRE_HIGH(OneWireStruct);
 		
 		/* Wait for 55 us and release the line */
 		ONEWIRE_DELAY(55);
-		ONEWIRE_INPUT(OneWireStruct);
+#if (_DS18B20_USE_FREERTOS == 1)
+		taskEXIT_CRITICAL();
+#endif
 	} 
 	else 
 	{
 		/* Set line low */
+#if (_DS18B20_USE_FREERTOS == 1)
+		taskENTER_CRITICAL();
+#endif
 		ONEWIRE_LOW(OneWireStruct);
-		ONEWIRE_OUTPUT(OneWireStruct);
 		ONEWIRE_DELAY(65);
 		
 		/* Bit high */
-		ONEWIRE_INPUT(OneWireStruct);
+		ONEWIRE_HIGH(OneWireStruct);
 		
 		/* Wait for 5 us and release the line */
 		ONEWIRE_DELAY(5);
-		ONEWIRE_INPUT(OneWireStruct);
+#if (_DS18B20_USE_FREERTOS == 1)
+		taskEXIT_CRITICAL();
+#endif
 	}
 
 }
@@ -126,12 +162,14 @@ inline uint8_t OneWire_ReadBit(OneWire_t* OneWireStruct)
 	uint8_t bit = 0;
 	
 	/* Line low */
+#if (_DS18B20_USE_FREERTOS == 1)
+	taskENTER_CRITICAL();
+#endif
 	ONEWIRE_LOW(OneWireStruct);
-	ONEWIRE_OUTPUT(OneWireStruct);
 	ONEWIRE_DELAY(2);
 	
 	/* Release line */
-	ONEWIRE_INPUT(OneWireStruct);
+	ONEWIRE_HIGH(OneWireStruct);
 	ONEWIRE_DELAY(10);
 	
 	/* Read line value */
@@ -142,6 +180,9 @@ inline uint8_t OneWire_ReadBit(OneWire_t* OneWireStruct)
 	
 	/* Wait 50us to complete 60us period */
 	ONEWIRE_DELAY(50);
+#if (_DS18B20_USE_FREERTOS == 1)
+	taskEXIT_CRITICAL();
+#endif
 	
 	/* Return bit value */
 	return bit;

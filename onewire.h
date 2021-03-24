@@ -30,9 +30,10 @@ void ONEWIRE_DELAY(uint16_t time_us);
 
 /* Pin settings */
 void ONEWIRE_LOW(OneWire_t *gp);			
-void ONEWIRE_HIGH(OneWire_t *gp);		
+void ONEWIRE_HIGH(OneWire_t *gp);
 void ONEWIRE_INPUT(OneWire_t *gp);		
 void ONEWIRE_OUTPUT(OneWire_t *gp);		
+void ONEWIRE_OUTPUT_PP(OneWire_t *gp);	///< set OneWire pin to the output push-pull mode, use this for powering for conversion
 
 /* OneWire commands */
 #define ONEWIRE_CMD_RSCRATCHPAD			0xBE

@@ -4,8 +4,8 @@
 //	2018/09/08
 
 
-#include "onewire.h"
 #include "ds18b20Config.h"
+#include "onewire.h"
 #include <stdbool.h>
 
 #if (_DS18B20_USE_FREERTOS==1)
@@ -51,6 +51,8 @@ extern Ds18b20Sensor_t	ds18b20[_DS18B20_MAX_SENSORS];
 #define DS18B20_DATA_LEN							2
 #endif
 
+//extern OneWire_t;
+
 //###################################################################################
 typedef enum {
 	DS18B20_Resolution_9bits = 9,   /*!< DS18B20 9 bits resolution */
@@ -66,10 +68,20 @@ void			Ds18b20_Init(osPriority Priority);
 bool			Ds18b20_Init(void);
 #endif
 bool			Ds18b20_ManualConvert(void);
+//struct OneWire_t;
 //###################################################################################
 uint8_t 	DS18B20_Start(OneWire_t* OneWireStruct, uint8_t* ROM);
-void 			DS18B20_StartAll(OneWire_t* OneWireStruct);
-bool		 	DS18B20_Read(OneWire_t* OneWireStruct, uint8_t* ROM, float* destination);
+/**
+ * \brief send start temperature conversion command to all devices on the bus
+ * \return false if no devices on the bus, otherwise true
+ */
+bool 		DS18B20_StartAll(OneWire_t* OneWireStruct);
+/**
+ * \brief read temperature from device with address ROM or the single device
+ * \param [in] ROM address of the selected device or 0 if the only one device on the bus
+ * \return true if reading OK
+ */
+bool		DS18B20_Read(OneWire_t* OneWireStruct, uint8_t* ROM, float* destination);
 uint8_t 	DS18B20_GetResolution(OneWire_t* OneWireStruct, uint8_t* ROM);
 uint8_t 	DS18B20_SetResolution(OneWire_t* OneWireStruct, uint8_t* ROM, DS18B20_Resolution_t resolution);
 uint8_t 	DS18B20_Is(uint8_t* ROM);
