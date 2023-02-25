@@ -1,8 +1,6 @@
-
 #ifndef	_DS18B20_H
 #define	_DS18B20_H
 //	2018/09/08
-
 
 #include "onewire.h"
 #include "ds18b20Config.h"
@@ -10,22 +8,26 @@
 
 #if (_DS18B20_USE_FREERTOS==1)
 #include "cmsis_os.h"
+#elif (_DS18B20_USE_FREERTOS==2)
+#include "cmsis_os2.h"
+#endif
+
+#if (_DS18B20_USE_FREERTOS==1||_DS18B20_USE_FREERTOS==2)
 #define	Ds18b20Delay(x)			osDelay(x)
 #else
 #define	Ds18b20Delay(x)			HAL_Delay(x)
 #endif
 
 //###################################################################################
-typedef struct
-{
-	uint8_t 	Address[8];
-	float 		Temperature;
-	bool			DataIsValid;	
-	
-}Ds18b20Sensor_t;
+typedef struct {
+	uint8_t Address[8];
+	float Temperature;
+	bool DataIsValid;
+
+} Ds18b20Sensor_t;
 //###################################################################################
 
-extern Ds18b20Sensor_t	ds18b20[_DS18B20_MAX_SENSORS];
+extern Ds18b20Sensor_t ds18b20[_DS18B20_MAX_SENSORS];
 
 //###################################################################################
 /* Every onewire chip has different ROM code, but all the same chips has same family code */
@@ -53,33 +55,37 @@ extern Ds18b20Sensor_t	ds18b20[_DS18B20_MAX_SENSORS];
 
 //###################################################################################
 typedef enum {
-	DS18B20_Resolution_9bits = 9,   /*!< DS18B20 9 bits resolution */
+	DS18B20_Resolution_9bits = 9, /*!< DS18B20 9 bits resolution */
 	DS18B20_Resolution_10bits = 10, /*!< DS18B20 10 bits resolution */
 	DS18B20_Resolution_11bits = 11, /*!< DS18B20 11 bits resolution */
-	DS18B20_Resolution_12bits = 12  /*!< DS18B20 12 bits resolution */
+	DS18B20_Resolution_12bits = 12 /*!< DS18B20 12 bits resolution */
 } DS18B20_Resolution_t;
 
 //###################################################################################
 #if (_DS18B20_USE_FREERTOS==1)
 void			Ds18b20_Init(osPriority Priority);
+#elif (_DS18B20_USE_FREERTOS==2)
+void Ds18b20_Init(osPriority_t Priority);
 #else
-bool			Ds18b20_Init(void);
+bool Ds18b20_Init(void);
 #endif
-bool			Ds18b20_ManualConvert(void);
+bool Ds18b20_ManualConvert(void);
 //###################################################################################
-uint8_t 	DS18B20_Start(OneWire_t* OneWireStruct, uint8_t* ROM);
-void 			DS18B20_StartAll(OneWire_t* OneWireStruct);
-bool		 	DS18B20_Read(OneWire_t* OneWireStruct, uint8_t* ROM, float* destination);
-uint8_t 	DS18B20_GetResolution(OneWire_t* OneWireStruct, uint8_t* ROM);
-uint8_t 	DS18B20_SetResolution(OneWire_t* OneWireStruct, uint8_t* ROM, DS18B20_Resolution_t resolution);
-uint8_t 	DS18B20_Is(uint8_t* ROM);
-uint8_t 	DS18B20_SetAlarmHighTemperature(OneWire_t* OneWireStruct, uint8_t* ROM, int8_t temp);
-uint8_t 	DS18B20_SetAlarmLowTemperature(OneWire_t* OneWireStruct, uint8_t* ROM, int8_t temp);
-uint8_t 	DS18B20_DisableAlarmTemperature(OneWire_t* OneWireStruct, uint8_t* ROM);
-uint8_t 	DS18B20_AlarmSearch(OneWire_t* OneWireStruct);
-uint8_t 	DS18B20_AllDone(OneWire_t* OneWireStruct);
+uint8_t DS18B20_Start(OneWire_t *OneWireStruct, uint8_t *ROM);
+void DS18B20_StartAll(OneWire_t *OneWireStruct);
+bool DS18B20_Read(OneWire_t *OneWireStruct, uint8_t *ROM, float *destination);
+uint8_t DS18B20_GetResolution(OneWire_t *OneWireStruct, uint8_t *ROM);
+uint8_t DS18B20_SetResolution(OneWire_t *OneWireStruct, uint8_t *ROM,
+		DS18B20_Resolution_t resolution);
+uint8_t DS18B20_Is(uint8_t *ROM);
+uint8_t DS18B20_SetAlarmHighTemperature(OneWire_t *OneWireStruct, uint8_t *ROM,
+		int8_t temp);
+uint8_t DS18B20_SetAlarmLowTemperature(OneWire_t *OneWireStruct, uint8_t *ROM,
+		int8_t temp);
+uint8_t DS18B20_DisableAlarmTemperature(OneWire_t *OneWireStruct, uint8_t *ROM);
+uint8_t DS18B20_AlarmSearch(OneWire_t *OneWireStruct);
+uint8_t DS18B20_AllDone(OneWire_t *OneWireStruct);
 //###################################################################################
 
- 
 #endif
 
