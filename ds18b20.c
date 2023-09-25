@@ -102,68 +102,77 @@ bool	Ds18b20_ManualConvert(void)
 #if (_DS18B20_USE_FREERTOS==1)
 void Task_Ds18b20(void const * argument)
 {
-	uint8_t	Ds18b20TryToFind=5;
-	do
+    uint8_t	Ds18b20TryToFind=5;
+    do
+    {
+	OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
+	TempSensorCount = 0;
+	while(HAL_GetTick() < 3000)
+	    Ds18b20Delay(100);
+	OneWireDevices = OneWire_First(&OneWire);
+	while (OneWireDevices)
 	{
-		OneWire_Init(&OneWire,_DS18B20_GPIO ,_DS18B20_PIN);
-		TempSensorCount = 0;	
-		while(HAL_GetTick() < 3000)
-			Ds18b20Delay(100);
-		OneWireDevices = OneWire_First(&OneWire);
-		while (OneWireDevices)
-		{
-			Ds18b20Delay(100);
-			TempSensorCount++;
-			OneWire_GetFullROM(&OneWire, ds18b20[TempSensorCount-1].Address);
-			OneWireDevices = OneWire_Next(&OneWire);
-		}
-		if(TempSensorCount>0)
-			break;
-		Ds18b20TryToFind--;
-	}while(Ds18b20TryToFind>0);
-	if(Ds18b20TryToFind==0)
-		vTaskDelete(Ds18b20Handle);
-	for (uint8_t i = 0; i < TempSensorCount; i++)
-	{
-		Ds18b20Delay(50);
-    DS18B20_SetResolution(&OneWire, ds18b20[i].Address, DS18B20_Resolution_12bits);
-		Ds18b20Delay(50);
-    DS18B20_DisableAlarmTemperature(&OneWire,  ds18b20[i].Address);
-  }
-	for(;;)
-	{
-		while(_DS18B20_UPDATE_INTERVAL_MS==0)
-		{
-			if(Ds18b20StartConvert==1)
-				break;
-			Ds18b20Delay(10);	
-		}
-		Ds18b20Timeout=_DS18B20_CONVERT_TIMEOUT_MS/10;
-		DS18B20_StartAll(&OneWire);
-		osDelay(100);
-    while (!DS18B20_AllDone(&OneWire))
-		{
-			osDelay(10);  
-			Ds18b20Timeout-=1;
-			if(Ds18b20Timeout==0)
-				break;
-		}	
-		if(Ds18b20Timeout>0)
-		{
-			for (uint8_t i = 0; i < TempSensorCount; i++)
-			{
-				Ds18b20Delay(1000);
-				ds18b20[i].DataIsValid = DS18B20_Read(&OneWire, ds18b20[i].Address, &ds18b20[i].Temperature);
-			}
-		}
-		else
-		{
-			for (uint8_t i = 0; i < TempSensorCount; i++)
-				ds18b20[i].DataIsValid = false;
-		}
-		Ds18b20StartConvert=0;
-    osDelay(_DS18B20_UPDATE_INTERVAL_MS);
+	    Ds18b20Delay(100);
+	    TempSensorCount++;
+	    OneWire_GetFullROM(&OneWire, ds18b20[TempSensorCount-1].Address);
+	    OneWireDevices = OneWire_Next(&OneWire);
 	}
+	if(TempSensorCount>0)
+	    break;
+	Ds18b20TryToFind--;
+    } while(Ds18b20TryToFind>0);
+    if(Ds18b20TryToFind==0)
+	vTaskDelete(Ds18b20Handle);
+    for (uint8_t i = 0; i < TempSensorCount; i++)
+    {
+	Ds18b20Delay(50);
+	DS18B20_SetResolution(&OneWire, ds18b20[i].Address, DS18B20_Resolution_12bits);
+	Ds18b20Delay(50);
+	DS18B20_DisableAlarmTemperature(&OneWire,  ds18b20[i].Address);
+    }
+    for(;;)
+    {
+	while(_DS18B20_UPDATE_INTERVAL_MS==0)
+	{
+	    if(Ds18b20StartConvert==1)
+		break;
+	    Ds18b20Delay(10);
+	}
+	DS18B20_StartAll(&OneWire);
+	Ds18b20Timeout=_DS18B20_CONVERT_TIMEOUT_MS/10;
+#if _DS18B20_USE_PULLPWR
+	ONEWIRE_HIGH(&OneWire);		/// set high level
+	ONEWIRE_OUTPUT_PP(&OneWire);	/// and set push-pull for powering the conversion 
+	osDelay(750);
+#else
+	osDelay(100);
+	while (!DS18B20_AllDone(&OneWire))
+	{
+	    osDelay(10);
+	    Ds18b20Timeout-=1;
+	    if(Ds18b20Timeout==0)
+		break;
+	}
+#endif
+	if(Ds18b20Timeout>0)
+	{
+#if _DS18B20_USE_PULLPWR
+		ONEWIRE_OUTPUT(&OneWire);	//// return pull-up for reading data instead of push-pull for powering conversion
+#endif
+		for (uint8_t i = 0; i < TempSensorCount; i++)
+		{
+			//Ds18b20Delay(1000);
+			ds18b20[i].DataIsValid = DS18B20_Read(&OneWire, ds18b20[i].Address, &ds18b20[i].Temperature);
+		}
+	}
+	else
+	{
+		for (uint8_t i = 0; i < TempSensorCount; i++)
+			ds18b20[i].DataIsValid = false;
+	}
+	Ds18b20StartConvert=0;
+	osDelay(_DS18B20_UPDATE_INTERVAL_MS);
+    }
 }
 #endif
 //###########################################################################################
@@ -184,17 +193,19 @@ uint8_t DS18B20_Start(OneWire_t* OneWire, uint8_t *ROM)
 	return 1;
 }
 
-void DS18B20_StartAll(OneWire_t* OneWire)
+bool DS18B20_StartAll(OneWire_t* OneWire)
 {
+	bool ret_val = 0;
 	/* Reset pulse */
-	OneWire_Reset(OneWire);
+	ret_val = !OneWire_Reset(OneWire);
 	/* Skip rom */
 	OneWire_WriteByte(OneWire, ONEWIRE_CMD_SKIPROM);
 	/* Start conversion on all connected devices */
 	OneWire_WriteByte(OneWire, DS18B20_CMD_CONVERTTEMP);
+	return ret_val;
 }
 
-bool DS18B20_Read(OneWire_t* OneWire, uint8_t *ROM, float *destination) 
+bool DS18B20_Read(OneWire_t* OneWire, uint8_t *ROM, float *destination)
 {
 	uint16_t temperature;
 	uint8_t resolution;
@@ -204,11 +215,13 @@ bool DS18B20_Read(OneWire_t* OneWire, uint8_t *ROM, float *destination)
 	uint8_t data[9];
 	uint8_t crc;
 	
-	/* Check if device is DS18B20 */
-	if (!DS18B20_Is(ROM)) {
-		return false;
+	if (ROM)	/// if reading with pointer used then check if it is the address of a DS18B20
+	{
+	  /* Check if device is DS18B20 */
+	  if (!DS18B20_Is(ROM)) {
+		  return false;
+	  }
 	}
-	
 	/* Check if line is released, if it is, then conversion is complete */
 	if (!OneWire_ReadBit(OneWire)) 
 	{
@@ -218,8 +231,13 @@ bool DS18B20_Read(OneWire_t* OneWire, uint8_t *ROM, float *destination)
 
 	/* Reset line */
 	OneWire_Reset(OneWire);
-	/* Select ROM number */
-	OneWire_SelectWithPointer(OneWire, ROM);
+	if (ROM) { /// if reading with pointer used then select device
+	  /* Select ROM number */
+	  OneWire_SelectWithPointer(OneWire, ROM);
+	}
+	if (!ROM) {	/// if reading without selecting device used then send Skip ROM command
+	    OneWire_WriteByte(OneWire, ONEWIRE_CMD_SKIPROM);
+	}
 	/* Read scratchpad command by onewire protocol */
 	OneWire_WriteByte(OneWire, ONEWIRE_CMD_RSCRATCHPAD);
 	
@@ -326,7 +344,7 @@ uint8_t DS18B20_GetResolution(OneWire_t* OneWire, uint8_t *ROM)
 	return ((conf & 0x60) >> 5) + 9;
 }
 
-uint8_t DS18B20_SetResolution(OneWire_t* OneWire, uint8_t *ROM, DS18B20_Resolution_t resolution) 
+uint8_t DS18B20_SetResolution(OneWire_t* OneWire, uint8_t *ROM, DS18B20_Resolution_t resolution)
 {
 	uint8_t th, tl, conf;
 	if (!DS18B20_Is(ROM)) 
@@ -400,7 +418,7 @@ uint8_t DS18B20_Is(uint8_t *ROM)
 	return 0;
 }
 
-uint8_t DS18B20_SetAlarmLowTemperature(OneWire_t* OneWire, uint8_t *ROM, int8_t temp) 
+uint8_t DS18B20_SetAlarmLowTemperature(OneWire_t* OneWire, uint8_t *ROM, int8_t temp)
 {
 	uint8_t tl, th, conf;
 	if (!DS18B20_Is(ROM)) 
@@ -451,7 +469,7 @@ uint8_t DS18B20_SetAlarmLowTemperature(OneWire_t* OneWire, uint8_t *ROM, int8_t 
 	return 1;
 }
 
-uint8_t DS18B20_SetAlarmHighTemperature(OneWire_t* OneWire, uint8_t *ROM, int8_t temp) 
+uint8_t DS18B20_SetAlarmHighTemperature(OneWire_t* OneWire, uint8_t *ROM, int8_t temp)
 {
 	uint8_t tl, th, conf;
 	if (!DS18B20_Is(ROM)) 
@@ -502,7 +520,7 @@ uint8_t DS18B20_SetAlarmHighTemperature(OneWire_t* OneWire, uint8_t *ROM, int8_t
 	return 1;
 }
 
-uint8_t DS18B20_DisableAlarmTemperature(OneWire_t* OneWire, uint8_t *ROM) 
+uint8_t DS18B20_DisableAlarmTemperature(OneWire_t* OneWire, uint8_t *ROM)
 {
 	uint8_t tl, th, conf;
 	if (!DS18B20_Is(ROM)) 
