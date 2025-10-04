@@ -35,7 +35,7 @@ Add these files to your STM32 project:
 
 - `ds18b20.h`  
 - `ds18b20.c`  
-- Ensure `ow.h` and `ow.c` are included  
+- Ensure One-Wire Library added, https://github.com/nimaltd/ow  
 
 ### 2. STM32Cube Pack Installer (Recommended)  
 Not yet available; include files manually for now.  
@@ -44,7 +44,7 @@ Not yet available; include files manually for now.
 
 ## 🔧 Configuration (`ds18b20_config_t`)  
 
-Set conversion resolution and alarm thresholds:  
+Set conversion resolution and alarm thresholds (Not yet available):  
 
 ```c
 ds18b20_config_t ds18_conf = {
@@ -58,16 +58,7 @@ ds18b20_config_t ds18_conf = {
 
 ## 🛠 CubeMX Setup  
 
-1. **GPIO Pin**  
-   - Configure as **Output Open-Drain** (e.g., `PC8`).  
-
-2. **Timer**  
-   - Use **internal clock source**.  
-   - Prescaler for `1 µs` tick (e.g., 170 MHz → `170 - 1`).  
-   - Enable **Timer NVIC interrupt**.  
-   - Enable **Register Callback** in Project Manager → Advanced Settings.  
-
----
+Read in One-Wire Reopository
 
 ## 🚀 Quick Start  
 
@@ -104,7 +95,7 @@ ow_init_struct.gpio = GPIOC;
 ow_init_struct.pin = GPIO_PIN_8;
 ow_init_struct.tim_cb = ds18_tim_cb;
 ow_init_struct.done_cb = NULL;   // Optional
-ow_init_struct.rom_id_filter = 0x28;
+ow_init_struct.rom_id_filter = DS18B20_ID;
 
 ds18b20_init(&ds18, &ow_init_struct);
 
