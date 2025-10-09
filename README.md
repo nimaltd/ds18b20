@@ -69,7 +69,7 @@ Read in One-Wire Reopository
 
 ### Define a handle  
 ```c
-ds18b20_handle_t ds18;
+ds18b20_t ds18;
 ```
 
 ### Timer callback  

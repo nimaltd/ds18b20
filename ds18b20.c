@@ -35,7 +35,7 @@
  * @param[in] init: Pointer to initialization data (GPIO, pin, timer, callback).
  * @retval None
  */
-void ds18b20_init(ds18b20_handle_t *handle, ow_init_t *init)
+void ds18b20_init(ds18b20_t *handle, ow_init_t *init)
 {
   assert_param(handle != NULL);
   assert_param(init != NULL);
@@ -53,7 +53,7 @@ void ds18b20_init(ds18b20_handle_t *handle, ow_init_t *init)
  * @param[in] handle: Pointer to the ds18b20 handle.
  * @retval true if busy, false if idle
  */
-__INLINE bool ds18b20_is_busy(ds18b20_handle_t *handle)
+__INLINE bool ds18b20_is_busy(ds18b20_t *handle)
 {
   assert_param(handle != NULL);
   return ow_is_busy(&handle->ow);
@@ -65,7 +65,7 @@ __INLINE bool ds18b20_is_busy(ds18b20_handle_t *handle)
  * @param[in] handle: Pointer to the ds18b20 handle.
  * @retval Last error code (ow_err_t)
  */
-__INLINE ow_err_t ds18b20_last_error(ds18b20_handle_t *handle)
+__INLINE ow_err_t ds18b20_last_error(ds18b20_t *handle)
 {
   assert_param(handle != NULL);
   return ow_last_error(&handle->ow);
@@ -77,7 +77,7 @@ __INLINE ow_err_t ds18b20_last_error(ds18b20_handle_t *handle)
  * @param[in] handle: Pointer to the ds18b20 handle.
  * @retval Last error code (ow_err_t)
  */
-__INLINE ow_err_t ds18b20_update_rom_id(ds18b20_handle_t *handle)
+__INLINE ow_err_t ds18b20_update_rom_id(ds18b20_t *handle)
 {
   assert_param(handle != NULL);
   return ow_update_rom_id(&handle->ow);
@@ -89,7 +89,7 @@ __INLINE ow_err_t ds18b20_update_rom_id(ds18b20_handle_t *handle)
  * @param[in] handle: Pointer to the ds18b20 handle.
  * @retval Last error code (ow_err_t)
  */
-ow_err_t ds18b20_cnv(ds18b20_handle_t *handle)
+ow_err_t ds18b20_cnv(ds18b20_t *handle)
 {
   assert_param(handle != NULL);
 
@@ -107,7 +107,7 @@ ow_err_t ds18b20_cnv(ds18b20_handle_t *handle)
  * @param[in] config: Pointer to New configuration.
  * @retval Last error code (ow_err_t)
  */
-ow_err_t ds18b20_conf(ds18b20_handle_t *handle, ds18b20_config_t *config)
+ow_err_t ds18b20_conf(ds18b20_t *handle, ds18b20_config_t *config)
 {
   uint8_t w_data[3];
   /* base config for 12-bit */
@@ -167,7 +167,7 @@ ow_err_t ds18b20_conf(ds18b20_handle_t *handle, ds18b20_config_t *config)
  * @param[in] handle: Pointer to the ds18b20 handle.
  * @retval True if Ready, otherwise false.
  */
-bool ds18b20_is_cnv_done(ds18b20_handle_t *handle)
+bool ds18b20_is_cnv_done(ds18b20_t *handle)
 {
   assert_param(handle != NULL);
 
@@ -181,7 +181,7 @@ bool ds18b20_is_cnv_done(ds18b20_handle_t *handle)
  * @param[in] handle: Pointer to the ds18b20 handle.
  * @retval Last error code (ow_err_t)
  */
-ow_err_t ds18b20_req_read(ds18b20_handle_t *handle)
+ow_err_t ds18b20_req_read(ds18b20_t *handle)
 {
   assert_param(handle != NULL);
 
@@ -196,7 +196,7 @@ ow_err_t ds18b20_req_read(ds18b20_handle_t *handle)
  * @param[in] rom_id: Selected ROM ID index.
  * @retval Last error code (ow_err_t)
  */
-ow_err_t ds18b20_req_read(ds18b20_handle_t *handle, uint8_t rom_id)
+ow_err_t ds18b20_req_read(ds18b20_t *handle, uint8_t rom_id)
 {
   assert_param(handle != NULL);
 
@@ -211,7 +211,7 @@ ow_err_t ds18b20_req_read(ds18b20_handle_t *handle, uint8_t rom_id)
  * @param[in] handle: Pointer to the ds18b20 handle.
  * @retval retval Temperature in Celsius * 100 (e.g. 1025 = 10.25°C), return -10000 if error
  */
-int16_t ds18b20_read_c(ds18b20_handle_t *handle)
+int16_t ds18b20_read_c(ds18b20_t *handle)
 {
   uint8_t r_data[9];
   uint16_t raw;

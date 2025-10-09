@@ -91,47 +91,47 @@ typedef struct
 /* DS18B20 Driver Handle */
 typedef struct
 {
-  ow_handle_t           ow;       /* One-Wire interface handle */
+  ow_t                  ow;       /* One-Wire interface handle */
   uint32_t              time;     /* Start conversion timestamp */
   ds18b20_cnv_tim_t     cnv_time; /* Conversion time based on resolution */
 
-} ds18b20_handle_t;
+} ds18b20_t;
 
 /*************************************************************************************************/
 /** API Functions **/
 /*************************************************************************************************/
 
 /* Initialize ds18b20 driver */
-void      ds18b20_init(ds18b20_handle_t *handle, ow_init_t *init);
+void      ds18b20_init(ds18b20_t *handle, ow_init_t *init);
 
 /* Check if ds18b20 bus is busy */
-bool      ds18b20_is_busy(ds18b20_handle_t *handle);
+bool      ds18b20_is_busy(ds18b20_t *handle);
 
 /* Check if ds18b20 bus is busy */
-ow_err_t  ds18b20_last_error(ds18b20_handle_t *handle);
+ow_err_t  ds18b20_last_error(ds18b20_t *handle);
 
 /* Start search to update all ROM IDs on the 1-Wire bus */
-ow_err_t  ds18b20_update_rom_id(ds18b20_handle_t *handle);
+ow_err_t  ds18b20_update_rom_id(ds18b20_t *handle);
 
 /* Send Start Conversation to All Devices */
-ow_err_t  ds18b20_cnv(ds18b20_handle_t *handle);
+ow_err_t  ds18b20_cnv(ds18b20_t *handle);
 
 /* Set new configuration */
-ow_err_t  ds18b20_conf(ds18b20_handle_t *handle, ds18b20_config_t *config);
+ow_err_t  ds18b20_conf(ds18b20_t *handle, ds18b20_config_t *config);
 
 /* Check if ds18b20 conversation is done */
-bool      ds18b20_is_cnv_done(ds18b20_handle_t *handle);
+bool      ds18b20_is_cnv_done(ds18b20_t *handle);
 
 #if (OW_MAX_DEVICE == 1)
 /* Send read temperature request */
-ow_err_t  ds18b20_req_read(ds18b20_handle_t *handle);
+ow_err_t  ds18b20_req_read(ds18b20_t *handle);
 #else
 /* Send read temperature request */
-ow_err_t  ds18b20_req_read(ds18b20_handle_t *handle, uint8_t rom_id);
+ow_err_t  ds18b20_req_read(ds18b20_t *handle, uint8_t rom_id);
 #endif
 
 /* Read temperature in Celsius */
-int16_t   ds18b20_read_c(ds18b20_handle_t *handle);
+int16_t   ds18b20_read_c(ds18b20_t *handle);
 
 /* Convert temperature from Celsius to Fahrenheit */
 int16_t   ds18b20_read_f(int16_t temp_c);
