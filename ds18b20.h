@@ -134,7 +134,7 @@ ow_err_t  ds18b20_req_read(ds18b20_t *handle, uint8_t rom_id);
 int16_t   ds18b20_read_c(ds18b20_t *handle);
 
 /* Convert temperature from Celsius to Fahrenheit */
-int16_t   ds18b20_read_f(int16_t temp_c);
+int16_t   ds18b20_cnv_to_f(int16_t temp_c);
 
 /*************************************************************************************************/
 /** End of File **/
