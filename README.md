@@ -12,7 +12,7 @@ The library is designed for:
 
 - Applications requiring **non-blocking temperature acquisition**  
 - Multi-device support on a single 1-Wire bus  
-- STM32 projects across F0/F1/F3/F4/F7/G0/G4/H7 families  
+- STM32 projects across All families  
 
 ---
 
