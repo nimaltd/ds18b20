@@ -38,6 +38,7 @@ extern "C" {
 /*************************************************************************************************/
 
 #define DS18B20_ID          0x28
+#define DS18B20_ERROR       -10000
 
 /*************************************************************************************************/
 /** Typedef/Struct/Enum **/
@@ -91,9 +92,10 @@ typedef struct
 /* DS18B20 Driver Handle */
 typedef struct
 {
-  ow_t                  ow;       /* One-Wire interface handle */
-  uint32_t              time;     /* Start conversion timestamp */
-  ds18b20_cnv_tim_t     cnv_time; /* Conversion time based on resolution */
+  ow_t                  ow;           /* One-Wire interface handle */
+  uint32_t              time;         /* Start conversion timestamp */
+  ds18b20_cnv_tim_t     cnv_time;     /* Conversion time based on resolution */
+  ds18b20_cnv_bit_t     cnv_bit_last; /* Store Last conversation bit length */
 
 } ds18b20_t;
 
@@ -135,6 +137,10 @@ int16_t   ds18b20_read_c(ds18b20_t *handle);
 
 /* Convert temperature from Celsius to Fahrenheit */
 int16_t   ds18b20_cnv_to_f(int16_t temp_c);
+
+/* Read Last conversation bit */
+ds18b20_cnv_bit_t
+          ds18b20_read_last_cnv_bit(ds18b20_t *handle);
 
 /*************************************************************************************************/
 /** End of File **/

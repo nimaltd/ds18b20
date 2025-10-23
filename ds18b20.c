@@ -209,13 +209,13 @@ ow_err_t ds18b20_req_read(ds18b20_t *handle, uint8_t rom_id)
 /**
  * @brief Read temperature from buffer.
  * @param[in] handle: Pointer to the ds18b20 handle.
- * @retval retval Temperature in Celsius * 100 (e.g. 1025 = 10.25°C), return -10000 if error
+ * @retval retval Temperature in Celsius * 100 (e.g. 1025 = 10.25°C), return DS18B20_ERROR if error
  */
 int16_t ds18b20_read_c(ds18b20_t *handle)
 {
   uint8_t r_data[9];
   uint16_t raw;
-  int32_t temp_x100 = -10000;   // use 32-bit for intermediate math
+  int32_t temp_x100 = DS18B20_ERROR;   // use 32-bit for intermediate math
   int8_t sign = 1;
   uint8_t resolution;
 
@@ -252,18 +252,22 @@ int16_t ds18b20_read_c(ds18b20_t *handle)
     case DS18B20_CNV_BIT_9:
       /* 0.5°C per bit → 50 per bit in x100 units */
       temp_x100 = (raw >> 3) * 50;
+      handle->cnv_bit_last = DS18B20_CNV_BIT_9;
       break;
     case DS18B20_CNV_BIT_10:
       /* 0.25°C per bit → 25 per bit in x100 units */
       temp_x100 = (raw >> 2) * 25;
+      handle->cnv_bit_last = DS18B20_CNV_BIT_10;
       break;
     case DS18B20_CNV_BIT_11:
       /* 0.125°C per bit → 12.5 per bit in x100 units ≈ 125 / 10 */
       temp_x100 = (raw >> 1) * 125 / 10;
+      handle->cnv_bit_last = DS18B20_CNV_BIT_11;
       break;
     case DS18B20_CNV_BIT_12:
       /* 0.0625°C per bit → 6.25 per bit in x100 units = 625 / 100 */
       temp_x100 = raw * 625 / 100;
+      handle->cnv_bit_last = DS18B20_CNV_BIT_12;
       break;
     default:
       sign = 1;
@@ -283,20 +287,33 @@ int16_t ds18b20_read_c(ds18b20_t *handle)
  * @brief Convert temperature from Celsius to Fahrenheit.
  * @param[in] temp_c: Temperature in Celsius * 100 (e.g., 1025 = 10.25°C)
  * @retval Temperature in Fahrenheit * 100 (e.g., 7234 = 72.34°F),
- *         returns -10000 if error
+ *         returns DS18B20_ERROR if error
  */
 int16_t ds18b20_cnv_to_f(int16_t temp_c)
 {
   /* Check for error */
-  if (temp_c == -10000)
+  if (temp_c == DS18B20_ERROR)
   {
-    return -10000;
+    return DS18B20_ERROR;
   }
 
   /* Convert to Fahrenheit: F = C * 1.8 + 32 */
   /* Multiply everything by 100 to keep hundredths */
   /* F_x100 = (C_x100 * 9 / 5) + 3200 */
   return (int16_t)((int32_t) temp_c * 9) / 5 + 3200;
+}
+
+/*************************************************************************************************/
+/**
+ * @brief Read last conversation bit.
+ * @param[in] handle: Pointer to the ds18b20 handle.
+ * @retval ds18b20_cnv_bit_t conversation bit length
+ */
+ds18b20_cnv_bit_t ds18b20_read_last_cnv_bit(ds18b20_t *handle)
+{
+  assert_param(handle != NULL);
+
+  return handle->cnv_bit_last;
 }
 
 /*************************************************************************************************/
